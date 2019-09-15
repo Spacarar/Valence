@@ -18,9 +18,9 @@ public:
 		for (usi y = 0; y < size; y++) {
 			this->space[y] = new Element * [size];
 			for (usi x = 0; x < size; x++) {
-				int testProtons = (x+y)%8;
-				int testElectrons = (x+y)%8;
-				int testNeutrons = (x + y) % 8;
+				int testProtons = x == y ? x : 0;
+				int testElectrons = x == y ? x : 0;
+				int testNeutrons = x == y ? x : 0;
 				this->space[y][x] = new Element(testProtons, testNeutrons, testElectrons, x * pixelSize * 3, y*pixelSize * 3);
 			}
 		}

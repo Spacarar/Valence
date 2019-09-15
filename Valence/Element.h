@@ -71,9 +71,10 @@ public:
 		drawRect.x = this->x + this->pixelSize;
 		drawRect.y = this->y + this->pixelSize;
 		//FIXME PROTON COLOR
-		const int red[8] = {0, 0, 0, 55, 55, 0, 240, 255};
-		const int green[8] = {200, 155, 100, 200, 122, 25, 25, 25};
-		const int blue[8] = {255, 255, 255, 200, 42, 122, 55, 0};
+		const int red[8] =   {  0,   0,   0,  55, 122, 255, 240, 200};
+		const int green[8] = {200, 155, 50, 200, 188, 122, 100,  0};
+		const int blue[8] =  {255, 255, 220, 105,  42,  42, 155,  25};
+
 		SDL_SetRenderDrawColor(ren, red[protons % 8], green[protons % 8], blue[protons % 8], 255);
 		SDL_RenderFillRect(ren, &drawRect);
 
