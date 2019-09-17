@@ -21,7 +21,10 @@ public:
 				int testProtons = x == y ? x : 0;
 				int testElectrons = x == y ? x : 0;
 				int testNeutrons = x == y ? x : 0;
-				this->space[y][x] = new Element(testProtons, testNeutrons, testElectrons, x * pixelSize * 3, y*pixelSize * 3);
+				this->space[y][x] = new Element(testProtons, testNeutrons, testElectrons, x * pixelSize * 3, y * pixelSize * 3, pixelSize);
+				if (testProtons || testElectrons || testNeutrons) {
+					std::cout << "pne(" << testProtons << ", " << testElectrons << ", "<< testNeutrons << ")  pressure: " << space[y][x]->radialPressure() << ", " << space[y][x]->nucleoidPressure() << ")\n\n";
+				}
 			}
 		}
 	}

@@ -23,13 +23,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Element.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Universe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GameEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Atom.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
