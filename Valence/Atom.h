@@ -34,6 +34,7 @@ public:
 		this->dx = this->dy = 0;
 		for (int i = 0; i < 8; i++) {
 			valence[i] = false;
+			outerForce[i] = 0.0;
 		}
 	}
 	Atom(int protons, int neutrons = -1, int electrons = -1, int x = 0, int y = 0, unsigned short int pixelSize = 8) {
@@ -55,6 +56,7 @@ public:
 		int valenceRatio = 1, unsetRatio = 1;
 
 		for (int i = 0; i < 8; i++) {
+			outerForce[i] = 0.0;
 			if (valenceRatio * oElectrons < unsetRatio * vElectrons) {
 				valenceRatio++;
 				this->valence[(i + startingPosition) % 8] = true;
@@ -76,6 +78,7 @@ public:
 		this->pixelSize = e.pixelSize;
 		for (int i = 0; i < 8; i++) {
 			this->valence[i] = e.valence[i];
+			this->outerForce[i] = e.outerForce[i];
 		}
 	}
 	bool isEmpty() {
@@ -168,8 +171,16 @@ public:
 		if (e == nullptr || this->isEmpty()) {
 			return 0;
 		}
-		
-
-
+		//FIXME FORCE CALCULATION BETWEEN ATOMS
+		return 0.0
+	}
+	
+	void setOuterPressure(double value, OFP, position) {
+		this->outerForce[position] = value;
+	}
+	void setOuterPressure(double value[8]) {
+		for(int i = 0; i < 8; i++) {
+			this->outerForce[i] = value[i];
+		}
 	}
 };
