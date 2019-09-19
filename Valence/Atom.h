@@ -11,6 +11,13 @@
 
 const int RENDER_POSITION[8] = { 0, 1, 2, 4, 7, 6, 5, 3};
 typedef enum OFP {F_TOPL, F_TOP, F_TOPR, F_RIGHT, F_BOTR, F_BOT, F_BOTL, F_LEFT} OFP; //Outer force position
+static OFP OOFP(int pos = 0) {
+	return static_cast<OFP>((pos + 4) % 8);
+}
+
+static OFP OOFP(OFP pos = F_TOPL) {
+	return static_cast<OFP>((static_cast<int>(pos) + 4) % 8);
+}
 
 class Atom {
 protected:
