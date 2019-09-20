@@ -31,7 +31,6 @@ class GameEngine {
 
 	time_point lastUpdate, lastRender;
 	millis currentTime;
-
 	void initPreSDL();
 	void initSDL();
 	void initPostSDL();

@@ -1,5 +1,7 @@
 ﻿  GameEngine.cpp
+D:\Spaca\Documents\GitHub\Valence\Valence\Universe.h(24,13): warning C4244:  'initializing': conversion from 'double' to 'int', possible loss of data
   Valence.cpp
-  Generating Code...
 D:\Spaca\Documents\GitHub\Valence\Valence\GameEngine.cpp(11,12): warning C4244:  'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  Generating Code...
+D:\Spaca\Documents\GitHub\Valence\Valence\Universe.h(24,13): warning C4244:  'initializing': conversion from 'double' to 'int', possible loss of data
   Valence.vcxproj -> D:\Spaca\Documents\GitHub\Valence\x64\Debug\Valence.exe
