@@ -260,6 +260,9 @@ public:
 		}
 	}
 	
+	double outerForceAt(OFP position) {
+		return this->outerForce[position];
+	}
 	//universe first runs setForceFor. turning setOnPass to true as it goes along
 	void setForceFor(Atom* e, int x1, int y1, int x2, int y2) {
 		if (this->isEmpty() || e->isEmpty()) {
@@ -305,7 +308,7 @@ public:
 			this->syncPressureAt(brForce, F_BOTR);
 			oa[F_BOTR]->syncPressureAt(brForce, F_TOPL);
 			oa[F_BOT]->syncPressureAt(brForce, F_TOPR);
-			oa[F_LEFT]->syncPressureAt(brForce, F_BOTL);
+			oa[F_RIGHT]->syncPressureAt(brForce, F_BOTL);
 		}
 		if (this->setOnPass[F_TOP]) {
 			double topForce = this->outerForce[F_TOP] + oa[F_TOP]->outerForce[F_BOT];

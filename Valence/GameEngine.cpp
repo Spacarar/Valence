@@ -45,7 +45,7 @@ void GameEngine::initSDL() {
 	}
 }
 void GameEngine::initPostSDL() {
-	universe = new Universe(9);
+	universe = new Universe(3);
 	isRunning = true;
 }
 
