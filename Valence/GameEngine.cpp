@@ -1,6 +1,8 @@
 #include "GameEngine.h"
 #include <thread>
 
+const unsigned int UNIVERSE_SIZE = 12;
+
 GameEngine::GameEngine() {
 	initPreSDL();
 	initSDL();
@@ -45,7 +47,7 @@ void GameEngine::initSDL() {
 	}
 }
 void GameEngine::initPostSDL() {
-	universe = new Universe(3);
+	universe = new Universe(UNIVERSE_SIZE);
 	isRunning = true;
 }
 

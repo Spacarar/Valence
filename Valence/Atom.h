@@ -48,19 +48,6 @@ static OFP getOFP(int x1, int y1, int x2, int y2) {
 		}
 	}
 }
-static OFP getOFP(SDL_Point xy1, SDL_Point xy2) {
-	return getOFP(xy1.x, xy1.y, xy2.x, xy2.y);
-}
-static OFP OOFP(OFP pos = F_TOPL) {
-	if (pos == F_NONE) {
-		return F_NONE;
-	}
-	return static_cast<OFP>((static_cast<int>(pos) + 4) % 8);
-}
-static OFP OOFP(int pos = 0) {
-	return OOFP(static_cast<OFP>(pos));
-}
-
 class Atom {
 protected:
 	int x, y;
@@ -265,17 +252,20 @@ public:
 	}
 	//universe first runs setForceFor. turning setOnPass to true as it goes along
 	void setForceFor(Atom* e, int x1, int y1, int x2, int y2) {
-		if (this->isEmpty() || e->isEmpty()) {
-			return;
-		}
 		OFP myPos = getOFP(x1, y1, x2, y2);
 		OFP otherPos = getOFP(x2, y2, x1, y1);
 		if (this->setOnPass[myPos]) { //we saw this side from a neighbor within this update
 			return;
 		}
-		double p = measureOuterPressure(e);
-		this->setOuterPressure(p, getOFP(x1, y1, x2, y2));
-		e->setOuterPressure(p, getOFP(x2, y2, x1, y1));
+		if (e->setOnPass[otherPos]) {
+			std::cout << "otherPos was already set!" << std::endl;
+		}
+		double p = 0;
+		if (!this->isEmpty() && !e->isEmpty()) {
+			p = measureOuterPressure(e);
+		}
+		this->setOuterPressure(p, myPos);
+		e->setOuterPressure(p, otherPos);		
 	}
 	
 	

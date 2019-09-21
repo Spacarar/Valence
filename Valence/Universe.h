@@ -42,13 +42,13 @@ public:
 				if (offY || offX) { //not self
 					int thisX = safeN(x + offX);
 					int thisY = safeN(y + offY);
-					this->space[y][x]->setForceFor(this->space[thisY][thisX], x, y, thisX, thisY);
+					this->space[y][x]->setForceFor(this->space[thisY][thisX], x, y, x + offX, y + offY);
 				}
 			}
 		}
 	}
 	void syncAtomPressureGrid(int y, int x) {
-		static Atom* neighbors[8];
+		Atom* neighbors[8];
 		neighbors[F_TOPL] = this->space[safeN(y - 1)][safeN(x - 1)];
 		neighbors[F_TOP] = this->space[safeN(y - 1)][x];
 		neighbors[F_TOPR] = this->space[safeN(y - 1)][safeN(x + 1)];
@@ -72,10 +72,10 @@ public:
 				this->syncAtomPressureGrid(y, x);
 			}
 		}
-		this->printUniverse();
-		std::cout << std::endl << "Waiting for confirmation..." << std::endl;
-		std::cin.get();
-		std::cin.get();
+		//this->printUniverse();
+		//std::cout << std::endl << "Waiting for confirmation..." << std::endl;
+		//std::cin.get();
+		//std::cin.get();
 	}
 
 	void printUniverse() {
@@ -91,7 +91,7 @@ public:
 					}
 					else if (yLevel == 1) {
 						cout << setw(6) <<  this->space[y][x]->outerForceAt(F_LEFT) << "|";
-						cout << setw(6) << "X|";
+						cout << setw(6) << "X" << "|";
 						cout << setw(6) <<  this->space[y][x]->outerForceAt(F_RIGHT) << "|";
 					}
 					else {
