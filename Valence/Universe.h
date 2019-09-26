@@ -5,6 +5,7 @@
 class Universe {
 	int universeSize;
 	Atom*** space;
+	Atom*** outerSpace;
 	int safeN(int n) {
 		if (n < 0) {
 			return this->universeSize - (abs(n) % this->universeSize);
@@ -17,20 +18,24 @@ public:
 	Universe() {
 		universeSize = 0;
 		space = nullptr;
+		this->outerSpace = nullptr;
 	}
 	Universe(int size, int pixelSize = 8) {
 		this->universeSize = size;
 		this->space = new Atom ** [size];
+		this->outerSpace = new Atom ** [size];
 		for (int y = 0; y < size; y++) {
 			this->space[y] = new Atom * [size];
+			this->outerSpace[y] = new Atom * [size];
 			for (int x = 0; x < size; x++) {
-				int pne = floor(rand() % 9);
-				if (x % 3 == 0 && y % 2 == 0 || x % 2 == 0 && y % 3 == 0) {
-					pne = 0;
+				int pne = 0;
+				if (floor(rand() % 10) == 0) {
+					pne = rand() % 9;
 				}
 				this->space[y][x] = new Atom(pne, pne, pne, x * pixelSize * 3, y * pixelSize * 3, pixelSize);
+				this->outerSpace[y][x] = new Atom(pne, pne, pne, x * pixelSize * 3, y * pixelSize * 3, pixelSize);
 				if (pne) {
-					std::cout << "pne(" << pne << ")  pressure: " << space[y][x]->radialPressure() << ", " << space[y][x]->nucleoidPressure() << ")\n\n";
+					std::cout << "pne(" << pne << ")  pressure: " << space[y][x]->radialPressure() << ", " << space[y][x]->nucleoidPressure() << ")\n";
 				}
 			}
 		}
@@ -60,6 +65,23 @@ public:
 		this->space[y][x]->syncPressureWithNeighbors(neighbors);
 	}
 
+	void moveAtoms(int y, int x) {
+		if (this->space[y][x]->isEmpty()) {
+			return;
+		}
+		int checkX = safeN(x + this->space[y][x]->dx());
+		int checkY = safeN(y + this->space[y][x]->dy());
+		if (!this->space[checkY][checkX]->isEmpty()) { //there is an atom here, we cannot move.
+			return;
+		}
+		bool passX = this->space[y][x]->dx() == this->space[checkY][checkX]->dx() * -1;
+		bool passY = this->space[y][x]->dy() == this->space[checkY][checkX]->dy() * -1;
+		if (passX && passY) {
+			this->outerSpace[checkY][checkX]->setValue(this->space[y][x]);
+			this->outerSpace[y][x]->setEmpty();
+		}
+	}
+
 	void update() {
 		for (int y = 0; y < universeSize; y++) {
 			for (int x = 0; x < universeSize; x++) {
@@ -72,10 +94,13 @@ public:
 				this->syncAtomPressureGrid(y, x);
 			}
 		}
-		//this->printUniverse();
-		//std::cout << std::endl << "Waiting for confirmation..." << std::endl;
-		//std::cin.get();
-		//std::cin.get();
+
+		for (int y = 0; y < universeSize; y++) {
+			for (int x = 0; x < universeSize; x++) {
+				this->moveAtoms(y, x);
+			}
+		}
+		std::swap(this->space, this->outerSpace);
 	}
 
 	void printUniverse() {
@@ -107,11 +132,13 @@ public:
 	}
 
 	void draw(SDL_Renderer* ren) {
+		static int drawCount = 0;
 		for (int y = 0; y < universeSize; y++) {
 			for (int x = 0; x < universeSize; x++) {
-				this->space[y][x]->draw(ren);
+				this->space[y][x]->draw(ren, drawCount);
 			}
 		}
+		drawCount++;
 	}
 
 	void handleEvent(SDL_Event e, SDL_Point m) {

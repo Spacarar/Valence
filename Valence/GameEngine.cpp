@@ -1,7 +1,7 @@
 #include "GameEngine.h"
 #include <thread>
 
-const unsigned int UNIVERSE_SIZE = 12;
+const unsigned int UNIVERSE_SIZE = 9;
 
 GameEngine::GameEngine() {
 	initPreSDL();
@@ -11,7 +11,7 @@ GameEngine::GameEngine() {
 
 void GameEngine::initPreSDL() {
 	srand(time(NULL));
-	UPS = 10;
+	UPS = 2;
 	totalFrames = 0;
 	totalUpdates = 0;
 	startTime = std::chrono::steady_clock::now();

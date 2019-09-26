@@ -51,14 +51,12 @@ static OFP getOFP(int x1, int y1, int x2, int y2) {
 class Atom {
 protected:
 	int x, y;
-	int dx, dy;
 	int protons;
 	int neutrons;
 	int electrons;
 	int vElectrons;
 	bool valence[8];
 	double outerForce[8];
-	unsigned short int renderOffset;
 	unsigned short int pixelSize;
 	bool setOnPass[8];
 
@@ -81,9 +79,8 @@ protected:
 public:
 	Atom() {
 		this->protons = this->electrons = this->neutrons = this->vElectrons = 0;
-		this->pixelSize = this->renderOffset = 0;
+		this->pixelSize = 0;
 		this->x = this->y = 0;
-		this->dx = this->dy = 0;
 		for (int i = 0; i < 8; i++) {
 			valence[i] = false;
 			outerForce[i] = 0.0;
@@ -95,10 +92,8 @@ public:
 		this->electrons = electrons == -1 ? protons : electrons;
 		this->neutrons = neutrons == -1 ? protons : neutrons;
 		this->pixelSize = pixelSize;
-		this->renderOffset = 0;
 		this->x = x;
 		this->y = y;
-		this->dx = this->dy = 0;
 		this->vElectrons = electrons % 8;
 		if (electrons != 0 && vElectrons == 0) {
 			this->vElectrons = 8;
@@ -123,13 +118,10 @@ public:
 	Atom(const Atom& e) {
 		this->x = e.x;
 		this->y = e.y;
-		this->dx = e.dx;
-		this->dy = e.dy;
 		this->electrons = e.electrons;
 		this->vElectrons = e.vElectrons;
 		this->protons = e.protons;
 		this->neutrons = e.neutrons;
-		this->renderOffset = e.renderOffset;
 		this->pixelSize = e.pixelSize;
 		for (int i = 0; i < 8; i++) {
 			this->valence[i] = e.valence[i];
@@ -140,8 +132,25 @@ public:
 	bool isEmpty() {
 		return (!this->protons && !this->electrons && !this->neutrons);
 	}
-
-	void draw(SDL_Renderer* ren) {
+	void setEmpty() {
+		this->protons = 0;
+		this->neutrons = 0;
+		this->electrons = 0;
+		this->vElectrons = 0;
+		for (int i = 0; i < 8; i++) {
+			this->valence[i] = false;
+		}
+	}
+	void setValue(Atom* atom) {
+		this->protons = atom->protons;
+		this->neutrons = atom->neutrons;
+		this->electrons = atom->electrons;
+		this->vElectrons = atom->vElectrons;
+		for (int i = 0; i < 8; i++) {
+			this->valence[i] = atom->valence[i];
+		}
+	}
+	void draw(SDL_Renderer* ren, int renderOffset) {
 		if (!this->protons && !this->electrons && !this->neutrons) {
 			return;
 		}
@@ -167,7 +176,7 @@ public:
 		const int xReorder[8] = { 0, 1, 2, 2, 2, 1, 0, 0 };
 		const int yReorder[8] = { 0, 0, 0, 1, 2, 2, 2, 1 };
 		for (unsigned short int i = 0; i < 8; i++) {
-			if (this->valence[(i + this->renderOffset) % 8]) {
+			if (this->valence[(i + renderOffset) % 8]) {
 				SDL_SetRenderDrawColor(ren, 250, 255, 255, 255);
 			}
 			else {
@@ -181,12 +190,7 @@ public:
 	}
 
 	void update() {
-		x += dx * 3 * pixelSize;
-		y += dy * 3 * pixelSize;
-		if (this->isEmpty()) {
-			return;
-		}
-		this->renderOffset = (this->renderOffset + 1) % 8;
+		//not sure yet
 	}
 
 	//measure of valence shell filling
@@ -235,14 +239,14 @@ public:
 		double valenceCovalent = this->vElectrons * 2.0 / 3.0 + e->vElectrons * 2.0 / 3.0;
 		double ionicChance = valenceDiff * (1.0 / 6.0) * 100.0 - abs(valenceIonic - 8.0)  * 12.0 - abs(netCharge) * 12.0;
 		double covalentChance = 100.0 - valenceDiff * 12.0 - abs(valenceCovalent - 8.0) * 12.0 - abs(netCharge) * 12.0;
-		if (ionicChance < 50 && covalentChance < 50) {
+		if (ionicChance < 50 && covalentChance < 50) { //no bond push away +
 			//add in the abs(ionicChance) to push away the same elements from each other if they don't naturally bond
 			return abs(this->radialPressure() - e->radialPressure() + abs(ionicChance));
 		}
-		else  if (ionicChance > covalentChance) {
+		else  if (ionicChance > covalentChance) { //ionic bond pull --
 			return abs(this->radialPressure() - e->radialPressure() - abs(ionicChance / 10)) * -1;
 		}
-		else {
+		else { //covalent bond pull -
 			return abs(this->radialPressure() - e->radialPressure() - abs(covalentChance / 10)) * -1;
 		}
 	}
@@ -267,7 +271,35 @@ public:
 		this->setOuterPressure(p, myPos);
 		e->setOuterPressure(p, otherPos);		
 	}
-	
+
+	double horizontalForce() {
+		return ((this->outerForce[F_TOPL] + this->outerForce[F_LEFT] + this->outerForce[F_BOTL]) * -1) + (this->outerForce[F_TOPR] + this->outerForce[F_RIGHT] + this->outerForce[F_BOTR]);
+	}
+	int dx() {
+		if (this->horizontalForce() > 0) {
+			return 1;
+		}
+		else if (this->horizontalForce() < 0) {
+			return -1;
+		}
+		else {
+			return 0;
+		}
+	}
+	double verticalForce() {
+		return ((this->outerForce[F_TOPL] + this->outerForce[F_TOP] + this->outerForce[F_TOPR]) * -1) + (this->outerForce[F_BOTL] + this->outerForce[F_BOT] + this->outerForce[F_BOTR]);
+	}
+	int dy() {
+		if (this->verticalForce() > 0) {
+			return 1;
+		}
+		else if (this->verticalForce() < 0) {
+			return -1;
+		}
+		else {
+			return 0;
+		}
+	}
 	
 	void syncPressureWithNeighbors(Atom* oa[8]) { //OFP Positioned neighbors
 		//setOnPass is true here from setForceFor.
