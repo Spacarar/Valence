@@ -139,6 +139,7 @@ public:
 	double measureOuterPressure(Atom* e);
 	
 	double outerForceAt(OFP position);
+
 	//universe first runs setForceFor. turning setOnPass to true as it goes along
 	void setForceFor(Atom* e, int x1, int y1, int x2, int y2);
 

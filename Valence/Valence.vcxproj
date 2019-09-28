@@ -130,6 +130,7 @@
   <ItemGroup>
     <ClCompile Include="Atom.cpp" />
     <ClCompile Include="GameEngine.cpp" />
+    <ClCompile Include="Universe.cpp" />
     <ClCompile Include="Valence.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -11,7 +11,7 @@ Atom::Atom() {
 	}
 }
 
-Atom::Atom(int protons, int neutrons = -1, int electrons = -1, int x = 0, int y = 0, unsigned short int pixelSize = 8) {
+Atom::Atom(int protons, int neutrons, int electrons, int x, int y, unsigned short int pixelSize) {
 	this->protons = protons;
 	this->electrons = electrons == -1 ? protons : electrons;
 	this->neutrons = neutrons == -1 ? protons : neutrons;

@@ -2,146 +2,64 @@
 
 #include "Atom.h"
 #include <iomanip>
+
+/*
+* Defines the laws of the universe
+*
+* Manages a grid of atoms determining rules for how they interact.
+* space is the main universe for display, outerspace is used for creating the n+1 grid.
+* space & outerspace pointers are swapped at the end of an update to complete the atoms calculated interactions.
+*/
 class Universe {
 	int universeSize;
 	Atom*** space;
 	Atom*** outerSpace;
-	int safeN(int n) {
-		if (n < 0) {
-			return this->universeSize - (abs(n) % this->universeSize);
-		}
-		else {
-			return n % this->universeSize;
-		}
-	}
+	
+	/* Creates grid wrapping effect for exceeding array bounds
+	*/
+	int safeN(int n);
 public:
-	Universe() {
-		universeSize = 0;
-		space = nullptr;
-		this->outerSpace = nullptr;
-	}
-	Universe(int size, int pixelSize = 8) {
-		this->universeSize = size;
-		this->space = new Atom ** [size];
-		this->outerSpace = new Atom ** [size];
-		for (int y = 0; y < size; y++) {
-			this->space[y] = new Atom * [size];
-			this->outerSpace[y] = new Atom * [size];
-			for (int x = 0; x < size; x++) {
-				int pne = 0;
-				if (floor(rand() % 10) == 0) {
-					pne = rand() % 9;
-				}
-				this->space[y][x] = new Atom(pne, pne, pne, x * pixelSize * 3, y * pixelSize * 3, pixelSize);
-				this->outerSpace[y][x] = new Atom(pne, pne, pne, x * pixelSize * 3, y * pixelSize * 3, pixelSize);
-				if (pne) {
-					std::cout << "pne(" << pne << ")  pressure: " << space[y][x]->radialPressure() << ", " << space[y][x]->nucleoidPressure() << ")\n";
-				}
-			}
-		}
-	}
+	Universe();
 
-	void updateAtomOuterPressure(int y, int x) {
-		for (int offX = -1; offX <= 1; offX++) {
-			for (int offY = -1; offY <= 1; offY++) {
-				if (offY || offX) { //not self
-					int thisX = safeN(x + offX);
-					int thisY = safeN(y + offY);
-					this->space[y][x]->setForceFor(this->space[thisY][thisX], x, y, x + offX, y + offY);
-				}
-			}
-		}
-	}
-	void syncAtomPressureGrid(int y, int x) {
-		Atom* neighbors[8];
-		neighbors[F_TOPL] = this->space[safeN(y - 1)][safeN(x - 1)];
-		neighbors[F_TOP] = this->space[safeN(y - 1)][x];
-		neighbors[F_TOPR] = this->space[safeN(y - 1)][safeN(x + 1)];
-		neighbors[F_RIGHT] = this->space[y][safeN(x + 1)];
-		neighbors[F_BOTR] = this->space[safeN(y + 1)][safeN(x + 1)];
-		neighbors[F_BOT] = this->space[safeN(y + 1)][x];
-		neighbors[F_BOTL] = this->space[safeN(y + 1)][safeN(x - 1)];
-		neighbors[F_LEFT] = this->space[y][safeN(x - 1)];
-		this->space[y][x]->syncPressureWithNeighbors(neighbors);
-	}
+	/* @param size is number of atoms
+	* @param pixelSize display size of 1 unit (electron/nucleus) of the grid
+	*/
+	Universe(int size, int pixelSize = 8);
 
-	void moveAtoms(int y, int x) {
-		if (this->space[y][x]->isEmpty()) {
-			return;
-		}
-		int checkX = safeN(x + this->space[y][x]->dx());
-		int checkY = safeN(y + this->space[y][x]->dy());
-		if (!this->space[checkY][checkX]->isEmpty()) { //there is an atom here, we cannot move.
-			return;
-		}
-		bool passX = this->space[y][x]->dx() == this->space[checkY][checkX]->dx() * -1;
-		bool passY = this->space[y][x]->dy() == this->space[checkY][checkX]->dy() * -1;
-		if (passX && passY) {
-			this->outerSpace[checkY][checkX]->setValue(this->space[y][x]);
-			this->outerSpace[y][x]->setEmpty();
-		}
-	}
+	/* Measures forces between each neighboring atom
+	* as it goes through the grid. it will set "setOnPass" = true
+	* for the positions that were measured from neighboring calculations
+	* this saves calculations and will be used to do the same in reverse for the sync
+	*/
+	void updateAtomOuterPressure(int y, int x);
 
-	void update() {
-		for (int y = 0; y < universeSize; y++) {
-			for (int x = 0; x < universeSize; x++) {
-				this->space[y][x]->update();
-				this->updateAtomOuterPressure(y, x);
-			}
-		}
-		for (int y = 0; y < universeSize; y++) {
-			for (int x = 0; x < universeSize; x++) {
-				this->syncAtomPressureGrid(y, x);
-			}
-		}
+	/* Takes all measurements of outer force made individually
+	* and adds them together for neighboring cells.
+	* for example the left<->right or top<->bottom force are added together
+	* all 4 members of the corner positions are added together
+	* this will determine the overall forces appllied to the atoms
+	*/
+	void syncAtomPressureGrid(int y, int x);
 
-		for (int y = 0; y < universeSize; y++) {
-			for (int x = 0; x < universeSize; x++) {
-				this->moveAtoms(y, x);
-			}
-		}
-		std::swap(this->space, this->outerSpace);
-	}
+	/* Uses the forces calculated to take action and make a movement plan for the next grid
+	* This function is critical for interesting changes to occur
+	* Changing the way this function works will highly affect the interactions
+	*/
+	void moveAtoms(int y, int x);
 
-	void printUniverse() {
-		using namespace std;
-		cout << fixed << showpoint << setprecision(1);
-		for (int y = 0; y < universeSize; y++) {
-			for(int yLevel = 0; yLevel < 3; yLevel++) {
-				for (int x = 0; x < universeSize; x++) {
-					if (yLevel == 0) {
-						cout << setw(6) <<  this->space[y][x]->outerForceAt(F_TOPL) << "|";
-						cout << setw(6) <<  this->space[y][x]->outerForceAt(F_TOP) << "|";
-						cout << setw(6) <<  this->space[y][x]->outerForceAt(F_TOPR) << "|";
-					}
-					else if (yLevel == 1) {
-						cout << setw(6) <<  this->space[y][x]->outerForceAt(F_LEFT) << "|";
-						cout << setw(6) << "X" << "|";
-						cout << setw(6) <<  this->space[y][x]->outerForceAt(F_RIGHT) << "|";
-					}
-					else {
-						cout << setw(6) <<  this->space[y][x]->outerForceAt(F_BOTL) << "|";
-						cout << setw(6) <<  this->space[y][x]->outerForceAt(F_BOT) << "|";
-						cout << setw(6) <<  this->space[y][x]->outerForceAt(F_BOTR) << "|";
-					}
-				}
-				cout << endl;
-			}
-			cout << endl;
-		}
-	}
+	/* Called before other update functions
+	* currently does nothing but could be used to set initial values
+	* or moved to the end of the update cycle to make more calculations
+	*/
+	void update();
 
-	void draw(SDL_Renderer* ren) {
-		static int drawCount = 0;
-		for (int y = 0; y < universeSize; y++) {
-			for (int x = 0; x < universeSize; x++) {
-				this->space[y][x]->draw(ren, drawCount);
-			}
-		}
-		drawCount++;
-	}
 
-	void handleEvent(SDL_Event e, SDL_Point m) {
-		return;
-	}
+	/* Prints Atoms as X's showing their measured force on all sides
+	 The size of this grid will be 3N X 3N due to showing neighboring outer force cells
+	*/
+	void printUniverse();
+
+	void draw(SDL_Renderer* ren);
+
+	void handleEvent(SDL_Event e, SDL_Point m);
 };
