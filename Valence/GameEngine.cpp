@@ -1,7 +1,6 @@
+#include "Config.h"
 #include "GameEngine.h"
 #include <thread>
-
-const unsigned int UNIVERSE_SIZE = 32;
 
 GameEngine::GameEngine() {
 	initPreSDL();

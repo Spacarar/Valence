@@ -1,4 +1,5 @@
 #include "Atom.h"
+#include "Config.h"
 
 Atom::Atom() {
 	this->protons = this->electrons = this->neutrons = this->vElectrons = 0;
@@ -36,6 +37,12 @@ Atom::Atom(int protons, int neutrons, int electrons, int x, int y, unsigned shor
 		else {
 			unsetRatio++;
 			this->valence[(i + startingPosition) % 8] = false;
+		}
+	}
+	if (DEBUG && PRINT_ATOM_INIT) {
+		if (!this->isEmpty() || INCLUDE_EMPTY_INIT) {
+			std::cout << "Atom(P:" << this->protons << " N:" << this->neutrons << " E" << this->electrons;
+			std::cout << ") Radial: " << this->radialPressure() << "  Nucleoid: " << this->nucleoidPressure() << std::endl;
 		}
 	}
 }
@@ -174,11 +181,15 @@ double Atom::measureOuterPressure(Atom* e) {
 		return abs(this->radialPressure() - e->radialPressure() + abs(ionicChance));
 	}
 	else  if (ionicChance > covalentChance) { //ionic bond pull --
-		//std::cout << "IONIC: " << this->electrons << " - " << e->electrons << " chance: " << ionicChance << std::endl;
+		if (DEBUG && PRINT_BOND_CALCULATION) {
+			std::cout << "IONIC: " << this->electrons << " - " << e->electrons << " chance: " << ionicChance << std::endl;
+		}
 		return abs(this->radialPressure() - e->radialPressure() - abs(ionicChance / 10)) * -1;
 	}
 	else { //covalent bond pull -
-		//std::cout << "COVALENT: " << this->electrons << " - " << e->electrons << " chance: " << covalentChance << std::endl;
+		if (DEBUG && PRINT_BOND_CALCULATION) {
+			std::cout << "COVALENT: " << this->electrons << " - " << e->electrons << " chance: " << covalentChance << std::endl;
+		}
 		return abs(this->radialPressure() - e->radialPressure() - abs(covalentChance / 10)) * -1;
 	}
 }
@@ -192,9 +203,6 @@ void Atom::setForceFor(Atom* e, int x1, int y1, int x2, int y2) {
 	OFP otherPos = getOFP(x2, y2, x1, y1);
 	if (this->setOnPass[myPos]) { //we saw this side from a neighbor within this update
 		return;
-	}
-	if (e->setOnPass[otherPos]) {
-		std::cout << "otherPos was already set!" << std::endl;
 	}
 	double p = 0;
 	if (!this->isEmpty() && !e->isEmpty()) {

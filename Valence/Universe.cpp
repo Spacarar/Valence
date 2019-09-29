@@ -1,4 +1,5 @@
 #include "Universe.h"
+#include "Config.h"
 
 Universe::Universe() {
 	universeSize = 0;
@@ -20,9 +21,6 @@ Universe::Universe(int size, int pixelSize) {
 			}
 			this->space[y][x] = new Atom(pne, pne, pne, x * pixelSize * 3, y * pixelSize * 3, pixelSize);
 			this->outerSpace[y][x] = new Atom(pne, pne, pne, x * pixelSize * 3, y * pixelSize * 3, pixelSize);
-			if (pne) {
-				std::cout << "pne(" << pne << ")  pressure: " << space[y][x]->radialPressure() << ", " << space[y][x]->nucleoidPressure() << ")\n";
-			}
 		}
 	}
 }
@@ -104,14 +102,20 @@ void Universe::moveAtoms(int y, int x) {
 	//check which direction the force is telling the atom to move in
 	int checkX = safeN(x + this->space[y][x]->dx());
 	int checkY = safeN(y + this->space[y][x]->dy());
-	/*std::cout << "Move atoms calculated for: (" << x << ", " << y << ")";
-	std::cout << " dx:" << this->space[y][x]->dx() << "  dy:" << this->space[y][x]->dy() << std::endl;
+	
+	if (DEBUG && PRINT_MOVEMENT_CALCULATION) {
+		std::cout << "Move atoms calculated for: (" << x << ", " << y << ")";
+		std::cout << " dx:" << this->space[y][x]->dx() << "  dy:" << this->space[y][x]->dy() << std::endl;
 
-	std::cout << "against (" << checkX << ", " << checkY << ")";
-	std::cout << " dx:" << this->space[checkY][checkX]->dx() << "  dy:" << this->space[checkY][checkX]->dy() << std::endl;*/
+		std::cout << "against (" << checkX << ", " << checkY << ")";
+		std::cout << " dx:" << this->space[checkY][checkX]->dx() << "  dy:" << this->space[checkY][checkX]->dy() << std::endl;
+	}
 
 	//if there is an atom here we cannot move into that position
 	if (!this->space[checkY][checkX]->isEmpty()) {
+		if (DEBUG && PRINT_MOVEMENT_CALCULATION) {
+			std::cout << "BLOCKED" << std::endl;
+		}
 		this->outerSpace[y][x]->setValue(this->space[y][x]);
 		return;
 	}
@@ -119,17 +123,24 @@ void Universe::moveAtoms(int y, int x) {
 	//check the empty space's neighboring cells for the atom that has the greatest applied force in that direction
 	//if you are the greatest force swap with the empty space.
 	if (this->space[y][x] == this->strongestNeighboringForce(checkY, checkX)) {
-		//std::cout << "PASS" << std::endl;
+		if (DEBUG && PRINT_MOVEMENT_CALCULATION) {
+			std::cout << "PASS" << std::endl;
+		}
 		this->outerSpace[checkY][checkX]->setValue(this->space[y][x]);
 		this->outerSpace[y][x]->setValue(this->space[checkY][checkX]);
 	}
 	else {
-		//std::cout << "FAIL" << std::endl;
+		if (DEBUG && PRINT_MOVEMENT_CALCULATION) {
+			std::cout << "FAIL" << std::endl;
+		}
 		this->outerSpace[y][x]->setValue(this->space[y][x]);
 	}
 }
 
 void Universe::update() {
+	if (DEBUG && WAIT_ON_UPDATE) {
+		std::cout << std::endl << "Update started" << std::endl;
+	}
 	for (int y = 0; y < universeSize; y++) {
 		for (int x = 0; x < universeSize; x++) {
 			this->space[y][x]->update();
@@ -142,15 +153,18 @@ void Universe::update() {
 			this->syncAtomPressureGrid(y, x);
 		}
 	}
-	//this->printUniverse();
-	//std::cout << std::endl;
+	if (DEBUG && PRINT_UNIVERSE_ON_UPDATE) {
+		this->printUniverse();
+	}
 	for (int y = 0; y < universeSize; y++) {
 		for (int x = 0; x < universeSize; x++) {
 			this->moveAtoms(y, x);
 		}
 	}
-	//std::cout << "One Update" << std::endl;
-	//std::cin.get();
+	if (DEBUG && WAIT_ON_UPDATE) {
+		std::cout << std::endl << "Update completed" << std::endl;
+		std::cin.get();
+	}
 	std::swap(this->space, this->outerSpace);
 }
 
@@ -189,7 +203,9 @@ void Universe::draw(SDL_Renderer* ren) {
 			this->space[y][x]->draw(ren, drawCount);
 		}
 	}
-	//drawCount++;
+	if (ELECTRON_SPIN) {
+		drawCount++;
+	}
 }
 
 void Universe::handleEvent(SDL_Event e, SDL_Point m) {
