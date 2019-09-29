@@ -162,6 +162,15 @@ public:
 	* see extra notes
 	*/
 	int dy();
+
+	double topLeftForce();
+	double topForce();
+	double topRightForce();
+	double rightForce();
+	double botLeftForce();
+	double botForce();
+	double botRightForce();
+	double leftForce();
 	
 	/* Add together forces from neighboring atoms
 	*

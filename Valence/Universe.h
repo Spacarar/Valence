@@ -18,13 +18,8 @@ class Universe {
 	/* Creates grid wrapping effect for exceeding array bounds
 	*/
 	int safeN(int n);
-public:
-	Universe();
 
-	/* @param size is number of atoms
-	* @param pixelSize display size of 1 unit (electron/nucleus) of the grid
-	*/
-	Universe(int size, int pixelSize = 8);
+	void getNeighborsFor(int y, int x, Atom* neighbors[8]);
 
 	/* Measures forces between each neighboring atom
 	* as it goes through the grid. it will set "setOnPass" = true
@@ -46,6 +41,18 @@ public:
 	* Changing the way this function works will highly affect the interactions
 	*/
 	void moveAtoms(int y, int x);
+
+	/* Returns the neighboring atom with the strongest force towards the position passed
+	* returns nullptr if no atom has an attraction towards that position;
+	*/
+	Atom* strongestNeighboringForce(int y, int x);
+public:
+	Universe();
+
+	/* @param size is number of atoms
+	* @param pixelSize display size of 1 unit (electron/nucleus) of the grid
+	*/
+	Universe(int size, int pixelSize = 8);
 
 	/* Called before other update functions
 	* currently does nothing but could be used to set initial values

@@ -78,13 +78,16 @@ void Atom::setValue(Atom* atom) {
 	}
 }
 void Atom::draw(SDL_Renderer* ren, int renderOffset) {
-	if (!this->protons && !this->electrons && !this->neutrons) {
-		return;
-	}
 	static SDL_Rect drawRect;
 	drawRect.w = drawRect.h = this->pixelSize;
 	drawRect.x = this->x + this->pixelSize;
 	drawRect.y = this->y + this->pixelSize;
+	if (this->isEmpty()) {
+		SDL_SetRenderDrawColor(ren, 70, 70, 70, 255);
+		SDL_RenderDrawRect(ren, &drawRect);
+		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+		return;
+	}
 	//FIXME PROTON COLOR
 	const int red[8] = { 75,   0,   0,  55, 122, 255, 240, 200 };
 	const int green[8] = { 255, 155, 50, 200, 188, 122, 100,  0 };
@@ -164,16 +167,18 @@ double Atom::measureOuterPressure(Atom* e) {
 	int valenceDiff = abs(this->vElectrons - e->vElectrons);
 	int valenceIonic = this->vElectrons + e->vElectrons;
 	double valenceCovalent = this->vElectrons * 2.0 / 3.0 + e->vElectrons * 2.0 / 3.0;
-	double ionicChance = valenceDiff * (1.0 / 6.0) * 100.0 - abs(valenceIonic - 8.0) * 12.0 - abs(netCharge) * 12.0;
-	double covalentChance = 100.0 - valenceDiff * 12.0 - abs(valenceCovalent - 8.0) * 12.0 - abs(netCharge) * 12.0;
+	double ionicChance = valenceDiff * (1.0 / 6.0) * 100.0 - abs(valenceIonic - 8.0) * 15.0 - abs(netCharge) * 6.0;
+	double covalentChance = 100.0 - valenceDiff * 8.0 - abs(valenceCovalent - 8.0) * 12.0 - abs(netCharge) * 12.0;
 	if (ionicChance < 50 && covalentChance < 50) { //no bond push away +
 		//add in the abs(ionicChance) to push away the same elements from each other if they don't naturally bond
 		return abs(this->radialPressure() - e->radialPressure() + abs(ionicChance));
 	}
 	else  if (ionicChance > covalentChance) { //ionic bond pull --
+		//std::cout << "IONIC: " << this->electrons << " - " << e->electrons << " chance: " << ionicChance << std::endl;
 		return abs(this->radialPressure() - e->radialPressure() - abs(ionicChance / 10)) * -1;
 	}
 	else { //covalent bond pull -
+		//std::cout << "COVALENT: " << this->electrons << " - " << e->electrons << " chance: " << covalentChance << std::endl;
 		return abs(this->radialPressure() - e->radialPressure() - abs(covalentChance / 10)) * -1;
 	}
 }
@@ -200,7 +205,7 @@ void Atom::setForceFor(Atom* e, int x1, int y1, int x2, int y2) {
 }
 
 double Atom::horizontalForce() {
-	return ((this->outerForce[F_TOPL] + this->outerForce[F_LEFT] + this->outerForce[F_BOTL]) * -1) + (this->outerForce[F_TOPR] + this->outerForce[F_RIGHT] + this->outerForce[F_BOTR]);
+	return (this->outerForce[F_TOPL] + this->outerForce[F_LEFT] + this->outerForce[F_BOTL]) + ((this->outerForce[F_TOPR] + this->outerForce[F_RIGHT] + this->outerForce[F_BOTR]) * -1);
 }
 int Atom::dx() {
 	if (this->horizontalForce() > 0) {
@@ -214,7 +219,7 @@ int Atom::dx() {
 	}
 }
 double Atom::verticalForce() {
-	return ((this->outerForce[F_TOPL] + this->outerForce[F_TOP] + this->outerForce[F_TOPR]) * -1) + (this->outerForce[F_BOTL] + this->outerForce[F_BOT] + this->outerForce[F_BOTR]);
+	return (this->outerForce[F_TOPL] + this->outerForce[F_TOP] + this->outerForce[F_TOPR]) + ((this->outerForce[F_BOTL] + this->outerForce[F_BOT] + this->outerForce[F_BOTR]) * -1);
 }
 int Atom::dy() {
 	if (this->verticalForce() > 0) {
@@ -228,11 +233,38 @@ int Atom::dy() {
 	}
 }
 
+double Atom::topLeftForce() {
+	return -1 * (this->verticalForce() + this->horizontalForce()) / 2;
+}
+double Atom::topForce() {
+	return -1 * this->verticalForce();
+}
+double Atom::topRightForce() {
+	return (this->horizontalForce() - this->verticalForce()) / 2;
+}
+double Atom::rightForce() {
+	return this->horizontalForce();
+}
+
+double Atom::botLeftForce() {
+	return (this->verticalForce() - this->horizontalForce()) / 2;
+}
+double Atom::botForce() {
+	return this->verticalForce();
+}
+double Atom::botRightForce() {
+	return (this->verticalForce() + this->horizontalForce()) / 2;
+}
+double Atom::leftForce() {
+	return -1 * this->horizontalForce();
+}
+
 void Atom::syncPressureWithNeighbors(Atom* oa[8]) {
 	//setOnPass is true here from setForceFor.
 	//so only update the spaces that have not been set to false yet
 	if (this->setOnPass[F_TOPL]) {
 		double tlForce = this->outerForce[F_TOPL] + oa[F_TOPL]->outerForce[F_BOTR] + oa[F_TOP]->outerForce[F_BOTL] + oa[F_LEFT]->outerForce[F_TOPR];
+		tlForce /= 4;
 		this->syncPressureAt(tlForce, F_TOPL);
 		oa[F_TOPL]->syncPressureAt(tlForce, F_BOTR);
 		oa[F_TOP]->syncPressureAt(tlForce, F_BOTL);
@@ -240,6 +272,7 @@ void Atom::syncPressureWithNeighbors(Atom* oa[8]) {
 	}
 	if (this->setOnPass[F_TOPR]) {
 		double trForce = this->outerForce[F_TOPR] + oa[F_TOPR]->outerForce[F_BOTL] + oa[F_TOP]->outerForce[F_BOTR] + oa[F_RIGHT]->outerForce[F_TOPL];
+		trForce /= 4;
 		this->syncPressureAt(trForce, F_TOPR);
 		oa[F_TOPR]->syncPressureAt(trForce, F_BOTL);
 		oa[F_TOP]->syncPressureAt(trForce, F_BOTR);
@@ -247,6 +280,7 @@ void Atom::syncPressureWithNeighbors(Atom* oa[8]) {
 	}
 	if (this->setOnPass[F_BOTL]) {
 		double blForce = this->outerForce[F_BOTL] + oa[F_BOTL]->outerForce[F_TOPR] + oa[F_BOT]->outerForce[F_TOPL] + oa[F_LEFT]->outerForce[F_BOTR];
+		blForce /= 4;
 		this->syncPressureAt(blForce, F_BOTL);
 		oa[F_BOTL]->syncPressureAt(blForce, F_TOPR);
 		oa[F_BOT]->syncPressureAt(blForce, F_TOPL);
@@ -254,6 +288,7 @@ void Atom::syncPressureWithNeighbors(Atom* oa[8]) {
 	}
 	if (this->setOnPass[F_BOTR]) {
 		double brForce = this->outerForce[F_BOTR] + oa[F_BOTR]->outerForce[F_TOPL] + oa[F_BOT]->outerForce[F_TOPR] + oa[F_RIGHT]->outerForce[F_BOTL];
+		brForce /= 4;
 		this->syncPressureAt(brForce, F_BOTR);
 		oa[F_BOTR]->syncPressureAt(brForce, F_TOPL);
 		oa[F_BOT]->syncPressureAt(brForce, F_TOPR);
@@ -261,21 +296,25 @@ void Atom::syncPressureWithNeighbors(Atom* oa[8]) {
 	}
 	if (this->setOnPass[F_TOP]) {
 		double topForce = this->outerForce[F_TOP] + oa[F_TOP]->outerForce[F_BOT];
+		topForce /= 2;
 		this->syncPressureAt(topForce, F_TOP);
 		oa[F_TOP]->syncPressureAt(topForce, F_BOT);
 	}
 	if (this->setOnPass[F_BOT]) {
 		double botForce = this->outerForce[F_BOT] + oa[F_BOT]->outerForce[F_TOP];
+		botForce /= 2;
 		this->syncPressureAt(botForce, F_BOT);
 		oa[F_BOT]->syncPressureAt(botForce, F_TOP);
 	}
 	if (this->setOnPass[F_LEFT]) {
 		double leftForce = this->outerForce[F_LEFT] + oa[F_LEFT]->outerForce[F_RIGHT];
+		leftForce /= 2;
 		this->syncPressureAt(leftForce, F_LEFT);
 		oa[F_LEFT]->syncPressureAt(leftForce, F_LEFT);
 	}
 	if (this->setOnPass[F_RIGHT]) {
 		double rightForce = this->outerForce[F_RIGHT] + oa[F_RIGHT]->outerForce[F_LEFT];
+		rightForce /= 2;
 		this->syncPressureAt(rightForce, F_RIGHT);
 		oa[F_RIGHT]->syncPressureAt(rightForce, F_LEFT);
 	}
