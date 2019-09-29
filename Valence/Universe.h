@@ -46,13 +46,17 @@ class Universe {
 	* returns nullptr if no atom has an attraction towards that position;
 	*/
 	Atom* strongestNeighboringForce(int y, int x);
+
+	bool hasNoNeighbors(int y, int x);
 public:
 	Universe();
 
 	/* @param size is number of atoms
 	* @param pixelSize display size of 1 unit (electron/nucleus) of the grid
 	*/
-	Universe(int size, int pixelSize = 8);
+	Universe(int size, int pixelSize = 7);
+
+	~Universe();
 
 	/* Called before other update functions
 	* currently does nothing but could be used to set initial values

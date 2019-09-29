@@ -81,6 +81,7 @@ void Atom::setValue(Atom* atom) {
 	this->electrons = atom->electrons;
 	this->vElectrons = atom->vElectrons;
 	for (int i = 0; i < 8; i++) {
+		this->outerForce[i] = atom->outerForce[i];
 		this->valence[i] = atom->valence[i];
 	}
 }
@@ -89,7 +90,7 @@ void Atom::draw(SDL_Renderer* ren, int renderOffset) {
 	drawRect.w = drawRect.h = this->pixelSize;
 	drawRect.x = this->x + this->pixelSize;
 	drawRect.y = this->y + this->pixelSize;
-	if (this->isEmpty()) {
+	if (SHOW_EMPTY && this->isEmpty()) {
 		SDL_SetRenderDrawColor(ren, 70, 70, 70, 255);
 		SDL_RenderDrawRect(ren, &drawRect);
 		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
@@ -210,6 +211,13 @@ void Atom::setForceFor(Atom* e, int x1, int y1, int x2, int y2) {
 	}
 	this->setOuterPressure(p, myPos);
 	e->setOuterPressure(p, otherPos);
+}
+
+void Atom::setExistingForces(Atom* e, int x1, int y1, int x2, int y2) {
+	OFP myPos = getOFP(x1, y1, x2, y2);
+	OFP otherPos = getOFP(x2, y2, x1, y1);
+	this->setOuterPressure(this->outerForce[myPos], myPos);
+	e->setOuterPressure(this->outerForce[myPos], otherPos);
 }
 
 double Atom::horizontalForce() {

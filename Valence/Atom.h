@@ -142,6 +142,9 @@ public:
 
 	//universe first runs setForceFor. turning setOnPass to true as it goes along
 	void setForceFor(Atom* e, int x1, int y1, int x2, int y2);
+	
+	//runs this if has no neighbors to simulate inertia instead of using setForceFor
+	void setExistingForces(Atom* e, int x1, int y1, int x2, int y2);
 
 	/* Outer force calculated to left-/right+ of an atom 
 	*/

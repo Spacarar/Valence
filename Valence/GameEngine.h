@@ -13,7 +13,7 @@ typedef std::chrono::steady_clock::time_point time_point;
 typedef std::chrono::milliseconds millis;
 
 class GameEngine {
-	int UPS;
+	int UPS_CHOICE;
 	size_t totalFrames;
 	size_t totalUpdates;
 	time_point startTime;
@@ -25,6 +25,7 @@ class GameEngine {
 
 	Universe* universe;
 
+	SDL_mutex* updateMute, * renderMute;
 	SDL_Thread* updateThread, * renderThread;
 	SDL_Window* window;
 	SDL_Renderer* ren;

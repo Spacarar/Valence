@@ -10,7 +10,7 @@ GameEngine::GameEngine() {
 
 void GameEngine::initPreSDL() {
 	srand(time(NULL));
-	UPS = 2;
+	UPS_CHOICE = 1;
 	totalFrames = 0;
 	totalUpdates = 0;
 	startTime = std::chrono::steady_clock::now();
@@ -62,7 +62,7 @@ int GameEngine::updateGame(void* self) {
 bool GameEngine::updateRequired() {
 	using namespace std::chrono_literals;
 	std::chrono::milliseconds duration;
-	duration = std::chrono::milliseconds(1000 / UPS) - std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lastUpdate);
+	duration = std::chrono::milliseconds(1000 / UPS[UPS_CHOICE]) - std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lastUpdate);
 	if (duration < 1ms) {
 		lastUpdate = std::chrono::steady_clock::now();
 		return true;
@@ -103,6 +103,21 @@ void GameEngine::handleEvent(SDL_Event e) {
 	mousePoint.x = e.motion.x;
 	mousePoint.y = e.motion.y;
 	universe->handleEvent(e, mousePoint);
+	if (e.type == SDL_MOUSEBUTTONDOWN) {
+		if (e.button.button == SDL_BUTTON_LEFT) {
+			Universe* temp = this->universe;
+			this->universe = new Universe(UNIVERSE_SIZE);
+			delete temp;
+		}
+	}
+	else if (e.type == SDL_KEYDOWN) {
+		SDL_Keycode updateRateMap[10] = { SDLK_0, SDLK_1, SDLK_2, SDLK_3, SDLK_4, SDLK_5, SDLK_6, SDLK_7, SDLK_8, SDLK_9 };
+		for (int i = 0; i < 10; i++) {
+			if (e.key.keysym.sym == updateRateMap[i]) {
+				this->UPS_CHOICE = i;
+			}
+		}
+	}
 }
 
 void GameEngine::run() {

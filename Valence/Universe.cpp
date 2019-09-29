@@ -16,13 +16,26 @@ Universe::Universe(int size, int pixelSize) {
 		this->outerSpace[y] = new Atom * [size];
 		for (int x = 0; x < size; x++) {
 			int pne = 0;
-			if (floor(rand() % 5) == 0) {
+			if (floor(rand() % 8) == 0) {
 				pne = rand() % 9;
 			}
 			this->space[y][x] = new Atom(pne, pne, pne, x * pixelSize * 3, y * pixelSize * 3, pixelSize);
 			this->outerSpace[y][x] = new Atom(pne, pne, pne, x * pixelSize * 3, y * pixelSize * 3, pixelSize);
 		}
 	}
+}
+
+Universe::~Universe() {
+	for (int y = 0; y < this->universeSize; y++) {
+		for (int x = 0; x < this->universeSize; x++) {
+			delete this->space[y][x];
+			delete this->outerSpace[y][x];
+		}
+		delete[] this->space[y];
+		delete[] this->outerSpace[y];
+	}
+	delete[] this->space;
+	delete[] this->outerSpace;
 }
 
 int Universe::safeN(int n) {
@@ -45,13 +58,30 @@ void Universe::getNeighborsFor(int y, int x, Atom* neighbors[8]) {
 	neighbors[F_LEFT] = this->space[y][safeN(x - 1)];
 }
 
+bool Universe::hasNoNeighbors(int y, int x) {
+	Atom* neighbors[8];
+	this->getNeighborsFor(y, x, neighbors);
+	for (int i = 0; i < 8; i++) {
+		if (!neighbors[i]->isEmpty()) {
+			return false; //we have a neighbor
+		}
+	}
+	return true; //we have no neighbors
+}
+
 void Universe::updateAtomOuterPressure(int y, int x) {
+	bool noNeighbors = this->hasNoNeighbors(y, x);
 	for (int offX = -1; offX <= 1; offX++) {
 		for (int offY = -1; offY <= 1; offY++) {
 			if (offY || offX) { //not self
 				int thisX = safeN(x + offX);
 				int thisY = safeN(y + offY);
-				this->space[y][x]->setForceFor(this->space[thisY][thisX], x, y, x + offX, y + offY);
+				if (noNeighbors) {
+					this->space[y][x]->setExistingForces(this->space[thisY][thisX], x, y, x + offX, y + offY);
+				}
+				else {
+					this->space[y][x]->setForceFor(this->space[thisY][thisX], x, y, x + offX, y + offY);
+				}
 			}
 		}
 	}
