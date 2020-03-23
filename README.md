@@ -5,6 +5,8 @@ Currently set up known to compile SDL2 for x64bit windows systems.
 Requires linking the SDL2, SDL2_ttf, SDL2_mixer, SDL2_image libraries for your system.
 Untested but likely could run on other systems as no platform specific code should be implemented.
 
+Please note that SDL2, SDL2_ttf, SDL2_mixer and SDL2_image are 4 separate libraries
+
 # Summary
 
 Built upon the ideas from Conways Game of Life and my general knowledge of chemistry, valence is a simplified cellular automata
